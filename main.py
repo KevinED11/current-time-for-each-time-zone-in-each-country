@@ -8,14 +8,9 @@ def get_all_available_countries() -> dict[str, str]:
     return dict(pytz.country_names)
 
 
-def delete_countries_with_no_timezone(countries: dict[str, str], 
-                                       countries_code: list[str] = ["BV", "HM"]) -> None:
-    try:
-      for country_code in countries_code:
-          if country_code in countries:
-              countries.pop(country_code)
-    except KeyError as err:
-        raise err
+def delete_countries_with_no_timezone(countries: dict[str, str],
+                                      countries_code: list[str] = ["BV", "HM"]) -> list[str]:
+    return [countries.pop(country_code) for country_code in countries_code if country_code in countries]
 
 
 def get_all_countries_as_tupple(countries: dict[str, str]) -> list[tuple[str, str]]:
@@ -23,46 +18,34 @@ def get_all_countries_as_tupple(countries: dict[str, str]) -> list[tuple[str, st
 
 
 def get_time_zones(countries: dict[str, str]) -> list[list[str]]:
-    timezones: list[list[str]] = []
-    for country_code in countries.keys():
-        time_zones: list[str] = pytz.country_timezones(country_code)
-        timezones.append(time_zones)
-
-    return timezones
+    return [pytz.country_timezones(country_code) for country_code in countries.keys()]
 
 
 def get_time_zones_for_each_country(countries: dict[str, str] | list[tuple[str, str]]) -> dict[str, list[str]]:
     if isinstance(countries, list):
         countries = dict(countries)
-    
-    countries_time_zones = {}
-    for country_code in countries.keys():
-      timezones: list[str] = pytz.country_timezones(country_code)
-      countries_time_zones[country_code] = {"timezones": timezones}
-
-    return countries_time_zones
+    return {country_code: {"timezones": pytz.country_timezones(country_code)} for country_code in countries.keys()}
 
 
 def get_the_current_time_for_each_time_zone_in_each_country(time_zones: dict[str, list[str]],
                                                             countries: list[str] | None = None) -> dict[str, dict[str, str]]:
     time_zones_countries:  dict[str, dict[str, str]] = {}
     for country_code in time_zones.keys():
-        time_zones_countries[country_code] = {time_zone: datetime.datetime.now(pytz.timezone(time_zone)).strftime("%H:%M:%S") for time_zone in time_zones[country_code]["timezones"]}
+        time_zones_countries[country_code] = {time_zone: datetime.datetime.now(pytz.timezone(
+            time_zone)).strftime("%H:%M:%S") for time_zone in time_zones[country_code]["timezones"]}
 
     if isinstance(countries, list) and countries:
-        filtered: dict[str, dict[str, str]] = {country_code: time_zones_countries[country_code] for country_code in countries if country_code in time_zones_countries}
+        filtered: dict[str, dict[str, str]] = {country_code: time_zones_countries[country_code]
+                                               for country_code in countries if country_code in time_zones_countries}
 
         if not filtered:
-            raise ValueError("No se encontraron países con esos códigos proporcionados")
-        
+            raise ValueError(
+                "No se encontraron países con esos códigos proporcionados")
+
         return filtered
-    
-        
+
     return time_zones_countries
 
-
-      
-      
 
 # all_countries = dict(pytz.country_names)
 # print(all_countries)
@@ -90,13 +73,13 @@ def get_the_current_time_for_each_time_zone_in_each_country(time_zones: dict[str
 
 def main() -> None:
     available_countries: dict[str, str] = get_all_available_countries()
-    delete_countries_with_no_timezone(available_countries, countries_code=["BV", "HM"])
+    delete_countries_with_no_timezone(
+        available_countries, countries_code=["BV", "HM"])
     countries = get_all_countries_as_tupple(available_countries)
     timezones = get_time_zones_for_each_country(countries)
-    print(get_the_current_time_for_each_time_zone_in_each_country(time_zones=timezones, countries=["MX", "AR"]))
-    
+    print(get_the_current_time_for_each_time_zone_in_each_country(
+        time_zones=timezones, countries=["MX", "AR"]))
+
 
 if __name__ == "__main__":
     main()
-
-
